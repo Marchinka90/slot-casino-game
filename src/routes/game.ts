@@ -1,14 +1,14 @@
 import { Router } from 'express';
 
-import { gamePlay, simGame } from '../controllers/game.js';
+import { playAGame, spinInMultiple, returnToPlayer } from '../controllers/game.js';
 
 const router = Router();
 
-router.post('/play', gamePlay);
+router.post('/play', playAGame);
 
-router.post('/sim', simGame);
+router.post('/sim', spinInMultiple);
 
-// router.get('/rtp', updateTodo);
+router.get('/rtp', returnToPlayer);
 
 
 export default router;
