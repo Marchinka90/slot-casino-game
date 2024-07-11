@@ -1,19 +1,23 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import { json } from "body-parser";
-
+import connectDB from './config/mongoose';
 import gameRoutes from "./routes/game";
+import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
 
+// Connect to MongoDB
+connectDB();
+
 app.use(json());
 
+// Routes
 app.use("/", gameRoutes);
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  // Error middleware handler
-  res.status(500).json({ message: err.message });
+// Error Handling Middleware
+app.use(errorHandler);
+
+app.listen(3000, () => {
+  console.log(`Server running on port 3000`);
 });
-
-app.listen(3000);
-
 

@@ -1,14 +1,24 @@
 import { RequestHandler } from "express";
+import { validationResult } from "express-validator";
 
+import { HttpError } from "../models/http-error";
 import { prepareRoll, spinTheRolls } from "../util/roll";
 import { calculateWinnings } from "../util/calculator";
 
 const rolls = [prepareRoll(), prepareRoll(), prepareRoll()];
 
 let totalBetInGame: number = 0;
-let totalWinningsInGame: number = 0
+let totalWinningsInGame: number = 0;
+// let walletid: string;
 
-export const playAGame: RequestHandler = (req, res) => {
+export const playAGame: RequestHandler = async (req, res, next) => {
+  
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError("Invalid input passed, please check your data.", 400)
+    );
+  }
 
   const bet = (req.body as { bet: number }).bet;
   totalBetInGame += bet;
@@ -24,11 +34,17 @@ export const playAGame: RequestHandler = (req, res) => {
 
   // --- BONUS --- Update the player's wallet with the winnings.
 
-
   res.status(200).json({ matrix, winnings });
 };
 
-export const spinInMultiple: RequestHandler = (req, res) => {
+export const spinInMultiple: RequestHandler = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError("Invalid inputs passed, please check your data.", 400)
+    );
+  }
+
   const body = req.body as { count: number; bet: number };
   const { count, bet } = body;
   const totalBet = bet * count;
@@ -56,14 +72,13 @@ export const returnToPlayer: RequestHandler = (req, res) => {
   // --- DONE --- Calculate the RTP percentage based on all spins made so far - total bets vs. total winnings
   let rtp: number;
 
-  if (!totalBetInGame ) {
+  if (!totalBetInGame) {
     return res.status(200).json({ rtp: 0 });
   }
-  rtp =( totalWinningsInGame / totalBetInGame) * 100;
+  rtp = (totalWinningsInGame / totalBetInGame) * 100;
 
   totalBetInGame = 0;
   totalWinningsInGame = 0;
 
   res.status(200).json({ rtp });
 };
-
