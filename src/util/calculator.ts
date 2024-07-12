@@ -1,4 +1,4 @@
-import { MAX_ITEMS_PER_ROW } from "./roll";
+import { MAX_ITEMS_PER_ROW } from './roll';
 
 export const calculateWinnings = (matrix: string[][], bet: number) => {
   let winningRows: number = 0;

@@ -1,36 +1,29 @@
-import { RequestHandler } from "express";
-import { validationResult } from "express-validator";
+import { RequestHandler } from 'express';
 
-import { HttpError } from "../models/http-error";
-import { prepareRoll, spinTheRolls } from "../util/roll";
-import { calculateWinnings } from "../util/calculator";
+// import { HttpError } from '../models/http-error';
+import { spinTheRolls } from '../util/roll';
+import { calculateWinnings } from '../util/calculator';
 
-const rolls = [prepareRoll(), prepareRoll(), prepareRoll()];
-
-let totalBetInGame: number = 0;
-let totalWinningsInGame: number = 0;
-// let walletid: string;
+import { 
+  getRolls,
+  getTotalBetsInGame,
+  getTotalWinningsInGame,
+  setTotalBetsInGame,
+  setTotalWinningsInGame,
+} from '../config/initializeGame';
 
 export const playAGame: RequestHandler = async (req, res, next) => {
-  
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(
-      new HttpError("Invalid input passed, please check your data.", 400)
-    );
-  }
-
-  const bet = (req.body as { bet: number }).bet;
-  totalBetInGame += bet;
-  // --- BONUS --- Error Handling -  invalid input
+  const { bet } = (req.body as { bet: number });
+  setTotalBetsInGame(bet);
   // --- BONUS --- Deduct the bet amount from the player's wallet.
 
   // --- DONE --- Perform a random spin using the RNG.
+  let rolls = getRolls();
   const matrix = spinTheRolls(rolls);
 
   // --- DONE --- Calculate the winnings based on the final symbol matrix.
   const winnings = calculateWinnings(matrix, bet);
-  totalWinningsInGame += winnings;
+  setTotalWinningsInGame(winnings);
 
   // --- BONUS --- Update the player's wallet with the winnings.
 
@@ -38,28 +31,23 @@ export const playAGame: RequestHandler = async (req, res, next) => {
 };
 
 export const spinInMultiple: RequestHandler = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(
-      new HttpError("Invalid inputs passed, please check your data.", 400)
-    );
-  }
+  const { count, bet } = req.body as { count: number; bet: number };
 
-  const body = req.body as { count: number; bet: number };
-  const { count, bet } = body;
   const totalBet = bet * count;
-  totalBetInGame += totalBet;
+  setTotalBetsInGame(totalBet);
   // --- BONUS --- Deduct the total bet amount (bet * count) from the player's wallet.
 
   // --- DONE --- Perform the specified number of spins.
   let totalWinnings: number = 0;
 
   for (let i = 0; i < count; i++) {
+    let rolls = getRolls();
     const matrix = spinTheRolls(rolls);
     const winnings = calculateWinnings(matrix, bet);
     totalWinnings += winnings;
   }
-  totalWinningsInGame += totalWinnings;
+  setTotalWinningsInGame(totalWinnings);
+ 
   // --- DONE --- Calculate the total winnings and net result (total winnings - total bet).
   const netResult = totalWinnings - totalBet;
 
@@ -68,17 +56,17 @@ export const spinInMultiple: RequestHandler = (req, res, next) => {
   res.status(200).json({ totalWinnings, netResult });
 };
 
-export const returnToPlayer: RequestHandler = (req, res) => {
+export const returnToPlayer: RequestHandler = (req, res, next) => {
   // --- DONE --- Calculate the RTP percentage based on all spins made so far - total bets vs. total winnings
   let rtp: number;
-
-  if (!totalBetInGame) {
+  
+  let totalBetsInGame = getTotalBetsInGame();
+  if (totalBetsInGame == 0) {
     return res.status(200).json({ rtp: 0 });
   }
-  rtp = (totalWinningsInGame / totalBetInGame) * 100;
 
-  totalBetInGame = 0;
-  totalWinningsInGame = 0;
+  let totalWinningsInGame = getTotalWinningsInGame();
+  rtp = Math.round((totalWinningsInGame / totalBetsInGame) * 100);
 
   res.status(200).json({ rtp });
 };

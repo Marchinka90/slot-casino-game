@@ -1,22 +1,19 @@
-import { Router } from "express";
-import { check } from "express-validator";
+import { Router } from 'express';
+import { validateBet, validateCount } from '../middlewares/validators';
 
 import {
   playAGame,
   spinInMultiple,
   returnToPlayer,
-} from "../controllers/game.js";
+} from '../controllers/game';
 
 const router = Router();
 
-router.post("/play", [check("bet").isInt({ min: 1 })], playAGame);
+router.post('/play', validateBet, playAGame);
 
-router.post(
-  "/sim",
-  [check("count").isInt({ min: 1 }), check("bet").isInt({ min: 1 })],
-  spinInMultiple
-);
+router.post('/sim', validateBet, validateCount, spinInMultiple);
 
-router.get("/rtp", returnToPlayer);
+router.get('/rtp', returnToPlayer);
+
 
 export default router;
