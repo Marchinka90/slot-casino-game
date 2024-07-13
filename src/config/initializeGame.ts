@@ -1,17 +1,17 @@
-import { prepareRoll } from '../util/roll';
+import { prepareReel } from '../util/reel';
 
-let rolls: string[][];
+let reels: string[][];
 
 let betsInGame: number = 0;
 let winningsInGame: number = 0;
 
 export const initializeGame = (): void => {
-  rolls = [prepareRoll(), prepareRoll(), prepareRoll()];
+  reels = [prepareReel(), prepareReel(), prepareReel()];
   console.log('Game initialized');
 };
 
-export const getRolls = (): string[][] => {
-  return rolls;
+export const getReels = (): string[][] => {
+  return reels;
 };
 
 export const getTotalBetsInGame = (): number => {
