@@ -1,19 +1,20 @@
+import path from 'path';
 import request from "supertest";
 import { expect } from "chai";
-import app, { startApp, stopApp } from "../../../src/app";
-import { disconnectFromDB } from "../../../src/config/mongoose";
+import app, { stopApp } from "../../../src/app";
+import connectDB, {  disconnectFromDB } from "../../../src/config/mongoose";
 import Wallet from '../../../src/models/wallet'; 
 
-import {
-  MAX_REELS,
-  MAX_ITEMS_IN_REEL,
-} from "../../../src/util/reel";
+import { config } from 'dotenv';
+config({ path: path.resolve(__dirname, '../.env') });
 
+export const MAX_ITEMS_IN_REEL = process.env.MAX_ITEMS_IN_REEL || 3;
+export const MAX_REELS = process.env.MAX_REELS || 3;
 
 describe("Game Controller - Integration Tests", () => {
   // Arrange 
   before(async () => {
-    await startApp();
+    await connectDB();
   });
 
   
@@ -69,9 +70,9 @@ describe("Game Controller - Integration Tests", () => {
 
       // Check that response contains matrix and winnings
       expect(res.body).to.have.property('matrix').that.is.an('array');
-      expect(res.body.matrix).to.have.lengthOf(MAX_REELS);
+      expect(res.body.matrix).to.have.lengthOf(+MAX_REELS);
       res.body.matrix.forEach((reel: string[]) => {
-        expect(reel).to.be.an('array').that.has.lengthOf(MAX_ITEMS_IN_REEL);
+        expect(reel).to.be.an('array').that.has.lengthOf(+MAX_ITEMS_IN_REEL);
       });
 
       expect(res.body).to.have.property('winnings').that.is.a('number');
@@ -127,7 +128,7 @@ describe("Game Controller - Integration Tests", () => {
       // Assert
       expect(res.status).to.equal(200);
       
-      const expectedMaxTotalWinnings = postData.bet * postData.count * MAX_ITEMS_IN_REEL * 5;
+      const expectedMaxTotalWinnings = postData.bet * postData.count * +MAX_ITEMS_IN_REEL * 5;
       expect(res.body).to.have.property('totalWinnings').that.is.a('number');
       expect(res.body.totalWinnings).to.be.at.least(0);
       expect(res.body.totalWinnings).to.be.at.most(expectedMaxTotalWinnings);

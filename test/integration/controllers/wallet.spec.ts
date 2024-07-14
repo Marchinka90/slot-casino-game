@@ -1,14 +1,14 @@
 import request from "supertest";
 import { expect } from "chai";
-import app, { startApp, stopApp } from "../../../src/app";
-import { disconnectFromDB } from "../../../src/config/mongoose";
+import app, { stopApp } from "../../../src/app";
+import connectDB, { disconnectFromDB } from "../../../src/config/mongoose";
 
 import Wallet from '../../../src/models/wallet'; 
 
 describe("Wallet Controller - Integration Tests", () => {
   // Arrange 
   before(async () => {
-    await startApp();
+    await connectDB();
   });
 
   beforeEach( async () => {

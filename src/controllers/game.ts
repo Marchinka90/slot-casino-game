@@ -92,12 +92,11 @@ export const returnToPlayer: RequestHandler = (req, res, next) => {
   let rtp: number;
   
   let totalBetsInGame = getTotalBetsInGame();
-  if (totalBetsInGame == 0) {
+  let totalWinningsInGame = getTotalWinningsInGame();
+  if (totalBetsInGame == 0 || totalWinningsInGame < 0) {
     return res.status(200).json({ rtp: 0 });
   }
-
-  let totalWinningsInGame = getTotalWinningsInGame();
+  
   rtp = Math.round((totalWinningsInGame / totalBetsInGame) * 100);
-
   res.status(200).json({ rtp });
 };

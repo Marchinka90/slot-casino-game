@@ -1,18 +1,18 @@
-import { random } from "lodash";
+import path from 'path';
+import { random } from 'lodash';
+import { config } from 'dotenv';
+config({ path: path.resolve(__dirname, '../../.env') });
 
-export const ITEMS = ["cherry", "pear", "apple", "watermelon", "orange"];
-export const MAX_SLOTS = 30;
-export const MAX_NUMBER_OF_SPECIFIC_ITEM = 6;
-export const MAX_ITEMS_IN_REEL: number = 3;
-export const MAX_REELS: number = 3;
+export const ITEMS = ['cherry', 'pear', 'apple', 'watermelon', 'orange'];
+// Use environment variables
+export const MAX_SLOTS = process.env.MAX_SLOTS || 30;
+export const MAX_NUMBER_OF_SPECIFIC_ITEM = process.env.MAX_NUMBER_OF_SPECIFIC_ITEM || 6;
+export const MAX_ITEMS_IN_REEL = process.env.MAX_ITEMS_IN_REEL || 3;
 
 export const prepareReel = (): string[] => {
   const newReel: string[] = [];
   
-  // const maxSlots: number = +process.env.MAX_SLOTS!;
-  // const maxNumberOfSpecificItem: number = +process.env.MAX_NUMBER_OF_SPECIFIC_ITEM!;
-
-  for (let i = 0; i < MAX_SLOTS; i++) {
+  for (let i = 0; i < +MAX_SLOTS; i++) {
     let addedItem = false;
     
     while (!addedItem) {
@@ -33,20 +33,22 @@ export const prepareReel = (): string[] => {
 }
 
 export const spinReels = (reels: string[][]): string[][] => {
-  const maxItems = MAX_SLOTS - 1;
+  const maxItems = +MAX_SLOTS - 1;
   let matrix: string[][] = [];
-
+  
   reels.forEach((reel, key) => {
     let itemsOfMatrix: string[] = [];
-    const firstIndex = random(0, maxItems);
+    const firstIndex = random(0, maxItems);  //random number 10
 
     // Fill matrix reels
-    for(let i=0; i < MAX_REELS; i++) {
+    for(let i=0; i < +MAX_ITEMS_IN_REEL; i++) {
 
       // Check if the array is empty
       if (itemsOfMatrix.length < 0) {
-        itemsOfMatrix[i] = reel[firstIndex]
+        itemsOfMatrix[i] = reel[firstIndex];
+        continue;
       }
+
       // Check if prev item is the last one
       if (firstIndex + i > maxItems) {
         itemsOfMatrix[i] = reel[0];
