@@ -23,9 +23,13 @@
     "@types/lodash": "^4.17.6",
     "@types/mocha": "^10.0.7",
     "@types/mongoose": "^5.11.97",
+    "@types/sinon": "^17.0.3",
+    "@types/supertest": "^6.0.2",
     "chai": "^4.4.1",
     "mocha": "^10.6.0",
     "nodemon": "^3.1.4",
+    "sinon": "^18.0.0",
+    "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   }

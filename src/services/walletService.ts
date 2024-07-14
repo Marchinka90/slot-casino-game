@@ -10,20 +10,15 @@ export const getWalletById = async (id: string): Promise<IWallet | null> => {
   return await Wallet.findById(id);
 };
 
-export const getAllWallets = async (): Promise<IWallet[] | null> => {
-  return await Wallet.find({});
+export const getWallet = async (): Promise<IWallet | null> => {
+  return await Wallet.findOne();
 };
 
 export const updateWalletBalance = async (
-  id: string,
+  wallet: IWallet,
   amount: number,
   operation: "deposit" | "withdraw"
 ): Promise<void> => {
-
-  const wallet = await Wallet.findById(id);
-  if (!wallet) {
-    throw new HttpError("Wallet not found", 404);
-  }
   
   if (operation === "withdraw" && wallet.balance < amount) {
     throw new HttpError("Insufficient balance", 400);
@@ -33,12 +28,10 @@ export const updateWalletBalance = async (
   await wallet.save();
 };
 
-export const getFirstWalletOrCreate = async (): Promise<string> => {
+export const findWalletOrCreate = async (): Promise<void> => {
   const wallet = await Wallet.findOne();
   if (!wallet) {
     const newWallet = new Wallet();
     await newWallet.save();
-    return newWallet.id;
   }
-  return wallet.id;
 };

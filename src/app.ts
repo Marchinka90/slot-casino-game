@@ -10,13 +10,6 @@ import { errorHandler } from './middlewares/errorHandler';
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
-connectDB().then(async () => {
-  await initializeWalletId();
-}).then(() => {
-  initializeGame();
-});
-
 app.use(json());
 
 // Routes
@@ -25,8 +18,25 @@ app.use('/', gameRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
+let server: any = null;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+export const startApp = async () => {
+  // Connect to MongoDB
+  await connectDB().then(async () => {
+    await initializeWalletId();
+  }).then(() => {
+    initializeGame();
+  });
+  
+  server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
+export const stopApp = async () => {
+  if (server) {
+    server.close();
+  }
+}
+
+export default app;

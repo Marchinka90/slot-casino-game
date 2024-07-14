@@ -1,25 +1,25 @@
 import { RequestHandler } from "express";
 
 import { HttpError } from "../models/http-error";
-import { getWalletId } from "../config/initializeWallet";
-import { getWalletById, updateWalletBalance } from "../services/walletService";
+import { getWallet, updateWalletBalance } from "../services/walletService";
 
 export const depositInWallet: RequestHandler = async (req, res, next) => {
   try {  
-    const walletId = getWalletId();
-    if (!walletId) {
-      throw new HttpError('Wallet not found', 500);
+    const wallet = await getWallet();
+    if (!wallet) {
+      throw new HttpError('Wallet not found', 404);
     }
     
     const { deposit } = req.body as { deposit: number };
 
-    await updateWalletBalance(walletId, deposit, 'deposit');
+    await updateWalletBalance(wallet, deposit, 'deposit');
   
-    res.status(201).json({ message: `Wallet balance deposited successfully` });
+    res.status(200).json({ message: `Wallet balance deposited successfully` });
     
   } catch (error) {
-    if (error instanceof Error) {
-      return next(new HttpError(error.message, 500));
+    if (error instanceof Error) {      
+      const statusCode = (error as any).code || 500;
+      return next(new HttpError(error.message, statusCode));
     }
     next(error);
   }
@@ -27,19 +27,21 @@ export const depositInWallet: RequestHandler = async (req, res, next) => {
 
 export const withdrawFromWallet: RequestHandler = async (req, res, next) => {
   try {  
-    const walletId = getWalletId();
-    if (!walletId) {
-      throw new HttpError('Wallet not found', 500);
+    const wallet = await getWallet();
+    if (!wallet) {
+      throw new HttpError('Wallet not found', 404);
     }
     
     const { withdraw } = req.body as { withdraw: number };
-    await updateWalletBalance(walletId, withdraw, 'withdraw');
+    
+    await updateWalletBalance(wallet, withdraw, 'withdraw');
   
-    res.status(201).json({ message: `Wallet balance withdrawed successfully` });
+    res.status(200).json({ message: `Wallet balance withdrawed successfully`, withdraw });
     
   } catch (error) {
-    if (error instanceof Error) {
-      return next(new HttpError(error.message, 500));
+    if (error instanceof Error) {      
+      const statusCode = (error as any).code || 500;
+      return next(new HttpError(error.message, statusCode));
     }
     next(error);
   }
@@ -47,23 +49,18 @@ export const withdrawFromWallet: RequestHandler = async (req, res, next) => {
 
 export const walletBalance: RequestHandler = async (req, res, next) => {
   try {
-    const walletId = getWalletId();
-
-    if (!walletId) {
-      throw new HttpError('Wallet not found', 500);
-    }
-
-    const wallet = await getWalletById(walletId);
+    const wallet = await getWallet();
 
     if (!wallet) {
-      res.status(404).json({ message: 'Wallet not found' });
-    } else {
-      res.status(200).json({ balance: wallet.balance });
+      throw new HttpError('Wallet not found', 404);
     }
+
+    res.status(200).json({ balance: wallet.balance });
     
   } catch (error) {
-    if (error instanceof Error) {
-      return next(new HttpError(error.message, 500));
+    if (error instanceof Error) {      
+      const statusCode = (error as any).code || 500;
+      return next(new HttpError(error.message, statusCode));
     }
     next(error);
   }

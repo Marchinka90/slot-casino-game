@@ -3,7 +3,7 @@ import { RequestHandler } from 'express';
 import { HttpError } from '../models/http-error';
 import { spinReels } from '../util/reel';
 import { calculateWinnings } from '../util/calculator';
-import { getWalletId } from "../config/initializeWallet";
+import { getWallet } from "../services/walletService";
 
 import { 
   getReels,
@@ -17,37 +17,35 @@ import { updateWalletBalance } from "../services/walletService";
 
 export const playAGame: RequestHandler = async (req, res, next) => {
   const { bet } = (req.body as { bet: number });
-  // --- BONUS --- Deduct the bet amount from the player's wallet.
+  
   try {
-    const walletId = getWalletId();
-    if (!walletId) {
-      throw new HttpError('Wallet not found', 500);
+    const wallet = await getWallet();
+    if (!wallet) {
+      throw new HttpError('Wallet not found', 404);
     }
 
-    await updateWalletBalance(walletId, bet, 'withdraw');
+    await updateWalletBalance(wallet, bet, 'withdraw');
 
     setTotalBetsInGame(bet);
   
-    // --- DONE --- Perform a random spin using the RNG.
     let reels = getReels();
     const matrix = spinReels(reels);
-    // --- DONE --- Calculate the winnings based on the final symbol matrix.
+    
     const winnings = calculateWinnings(matrix, bet);
 
     if (winnings > 0) {
       setTotalWinningsInGame(winnings);
-      // --- BONUS --- Update the player's wallet with the winnings.
-      await updateWalletBalance(walletId, winnings, 'deposit');
+      await updateWalletBalance(wallet, winnings, 'deposit');
     }
   
     res.status(200).json({ matrix, winnings });
   } catch (error) {
-    if (error instanceof Error) {
-      return next(new HttpError(error.message, 500));
+    if (error instanceof Error) {      
+      const statusCode = (error as any).code || 500;
+      return next(new HttpError(error.message, statusCode));
     }
     next(error);
   }
-
 };
 
 export const spinInMultiple: RequestHandler = async (req, res, next) => {
@@ -55,16 +53,15 @@ export const spinInMultiple: RequestHandler = async (req, res, next) => {
   const totalBet = bet * count;
 
   try {
-    const walletId = getWalletId();
-    if (!walletId) {
-      throw new HttpError('Wallet not found', 500);
+    const wallet = await getWallet();
+    if (!wallet) {
+      throw new HttpError('Wallet not found', 404);
     }
-
-    // --- BONUS --- Deduct the total bet amount (bet * count) from the player's wallet.
-    await updateWalletBalance(walletId, totalBet, 'withdraw');
+    
+    await updateWalletBalance(wallet, totalBet, 'withdraw');
     setTotalBetsInGame(totalBet);
 
-    // --- DONE --- Perform the specified number of spins.
+    
     let totalWinnings: number = 0;
   
     for (let i = 0; i < count; i++) {
@@ -76,25 +73,22 @@ export const spinInMultiple: RequestHandler = async (req, res, next) => {
 
     if (totalWinnings > 0) {
       setTotalWinningsInGame(totalWinnings);
-      
-      // --- BONUS --- Update the player's wallet with the total winnings.
-      await updateWalletBalance(walletId, totalWinnings, 'deposit');
+      await updateWalletBalance(wallet, totalWinnings, 'deposit');
     }
   
-    // --- DONE --- Calculate the total winnings and net result (total winnings - total bet).
     const netResult = totalWinnings - totalBet;
   
     res.status(200).json({ totalWinnings, netResult });
   } catch (error) {
-    if (error instanceof Error) {
-      return next(new HttpError(error.message, 500));
+    if (error instanceof Error) {      
+      const statusCode = (error as any).code || 500;
+      return next(new HttpError(error.message, statusCode));
     }
     next(error);
   }
 };
 
 export const returnToPlayer: RequestHandler = (req, res, next) => {
-  // --- DONE --- Calculate the RTP percentage based on all spins made so far - total bets vs. total winnings
   let rtp: number;
   
   let totalBetsInGame = getTotalBetsInGame();
